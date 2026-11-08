@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cartel NO PASAR · simulación</title>
+  <meta name="description" content="Simulación interactiva de un cartel LED que avisa NO PASAR cuando el micrófono del portátil está en uso.">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23101420'/%3E%3Crect x='4' y='12' width='24' height='8' rx='2' fill='%23ff3b3b'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="cabecera">
+    <p class="etiqueta">Proyecto de robótica · ESP32 + WS2812B</p>
+    <h1>Cartel <span class="rojo">NO PASAR</span> <span class="separador">/</span> <span class="verde">PASAR</span></h1>
+    <p class="lema">Cuando el micrófono del portátil se activa, el cartel de la puerta se pone en rojo. Pulsa el botón y mira el viaje completo: <b>micro → agente → WiFi → ESP32 → LEDs</b>.</p>
+    <nav class="enlaces" aria-label="Enlaces del proyecto">
+      <a href="https://github.com/granizocieza-cmyk/cartel-led-no-pasar-teletrabajo">Código en GitHub</a>
+      <a href="https://github.com/granizocieza-cmyk/cartel-led-no-pasar-teletrabajo#simulaci%C3%B3n-del-firmware-en-wokwi" id="enlace-wokwi">Circuito en Wokwi</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ================= ESCENA ================= -->
+    <section id="escena" aria-label="Escena: portátil, WiFi y cartel junto a la puerta">
+      <svg id="capa-red" aria-hidden="true">
+        <path id="ruta" fill="none"></path>
+        <g id="paquete" class="paquete" opacity="0">
+          <circle r="8"></circle>
+          <text y="-14" text-anchor="middle"></text>
+        </g>
+      </svg>
+
+      <!-- PORTÁTIL -->
+      <article id="portatil" class="tarjeta">
+        <h2 class="titulo-tarjeta"><span class="icono" aria-hidden="true">💻</span> Portátil de mamá</h2>
+        <div class="pantalla">
+          <div id="llamada" class="llamada" hidden>
+            <span class="punto-rec" aria-hidden="true"></span>
+            <span>Teams · llamada con cliente</span>
+            <span id="cronometro" class="cronometro">00:00</span>
+          </div>
+
+          <button id="btn-llamada" class="boton principal" type="button" aria-pressed="false">
+            <span class="b-icono" aria-hidden="true">📞</span>
+            <span class="b-texto">Entra una llamada de Teams</span>
+          </button>
+
+          <fieldset class="apps">
+            <legend>Programas que usan el micro</legend>
+            <label class="interruptor"><input type="checkbox" id="app-teams"><span class="pista"></span> Teams</label>
+            <label class="interruptor"><input type="checkbox" id="app-navegador"><span class="pista"></span> Navegador (Meet)</label>
+            <label class="interruptor"><input type="checkbox" id="app-zoom"><span class="pista"></span> Zoom</label>
+          </fieldset>
+
+          <div class="agente" aria-live="polite">
+            <h3>cartel-agent <small>(solo mira el <em>estado</em>, no el audio)</small></h3>
+            <dl>
+              <dt>Sesiones de captura activas</dt>
+              <dd id="wasapi">ninguna</dd>
+              <dt>Micrófono</dt>
+              <dd id="a-micro"><span class="chip">libre</span></dd>
+              <dt>Estado confirmado</dt>
+              <dd id="a-confirmado"><span class="chip">—</span></dd>
+            </dl>
+            <div class="medidor" id="m-antirrebote" hidden>
+              <div class="medidor-cab"><span>Antirrebote: esperando antes de PASAR</span><b id="v-antirrebote"></b></div>
+              <div class="barra"><i id="b-antirrebote"></i></div>
+            </div>
+            <div class="medidor" id="m-latido-pc">
+              <div class="medidor-cab"><span>Próximo latido al cartel</span><b id="v-latido-pc">—</b></div>
+              <div class="barra"><i id="b-latido-pc"></i></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ENLACE WIFI (etiqueta; el dibujo va en el SVG) -->
+      <div id="etiqueta-wifi" class="etiqueta-wifi" aria-hidden="true">
+        <span id="txt-wifi">WiFi de casa</span>
+      </div>
+
+      <!-- PARED CON PUERTA Y CARTEL -->
+      <article id="pared" class="tarjeta pared" aria-label="Pared junto a la puerta">
+        <div class="luz-pared" aria-hidden="true"></div>
+        <div class="cartel-zona">
+          <div class="soporte">
+            <canvas id="matriz" width="640" height="160" role="img" aria-label="Matriz de 32 por 8 LEDs del cartel"></canvas>
+          </div>
+          <p id="estado-cartel" class="estado-cartel" aria-live="polite">arrancando…</p>
+          <div class="medidor">
+            <div class="medidor-cab"><span>Consumo estimado</span><b id="v-ma">—</b></div>
+            <div class="barra consumo"><i id="b-ma"></i><u id="marca-limite"></u></div>
+          </div>
+          <div class="medidor">
+            <div class="medidor-cab"><span>Último latido recibido</span><b id="v-latido">—</b></div>
+            <div class="barra"><i id="b-latido"></i></div>
+          </div>
+        </div>
+        <div class="puerta" aria-hidden="true">
+          <div class="hoja"><i class="panel p1"></i><i class="panel p2"></i><i class="panel p3"></i><i class="panel p4"></i><b class="pomo"></b></div>
+          <div class="rendija"></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================= AJUSTES ================= -->
+    <section class="ajustes" aria-label="Ajustes de la demostración">
+      <div class="grupo">
+        <span class="grupo-titulo">Red</span>
+        <button id="btn-wifi" class="boton" type="button" aria-pressed="false">📡 Cortar el WiFi</button>
+      </div>
+      <div class="grupo">
+        <span class="grupo-titulo">Velocidad del tiempo</span>
+        <div class="segmentos" role="group" aria-label="Velocidad del tiempo">
+          <button class="seg activo" data-vel="1" type="button">×1</button>
+          <button class="seg" data-vel="3" type="button">×3</button>
+          <button class="seg" data-vel="10" type="button">×10</button>
+        </div>
+      </div>
+      <div class="grupo">
+        <label class="grupo-titulo" for="brillo">Brillo del cartel <output id="v-brillo">40</output>/48</label>
+        <input id="brillo" type="range" min="4" max="48" step="1" value="40">
+      </div>
+      <div class="grupo">
+        <span class="grupo-titulo">Cartel</span>
+        <button id="btn-reiniciar" class="boton" type="button">🔌 Reiniciar el ESP32</button>
+      </div>
+    </section>
+
+    <!-- ================= REGISTROS ================= -->
+    <section class="registros" aria-label="Registros">
+      <div class="registro">
+        <h2>agente.log <small>(PC)</small></h2>
+        <ol id="log-pc" class="consola" aria-live="off"></ol>
+      </div>
+      <div class="registro">
+        <h2>Puerto serie <small>(ESP32)</small></h2>
+        <ol id="log-esp" class="consola" aria-live="off"></ol>
+      </div>
+    </section>
+
+    <!-- ================= EXPLICACIÓN ================= -->
+    <section class="pasos" aria-label="Cómo funciona">
+      <h2>Qué estás viendo</h2>
+      <ol>
+        <li><b>El agente pregunta a Windows</b> una vez por segundo qué sesiones de micrófono están «activas». Nunca graba ni lee audio.</li>
+        <li><b>Micro activo → NO PASAR al instante.</b> Micro libre → espera 5 s antes de PASAR (<em>antirrebote</em>), para que no parpadee.</li>
+        <li><b>Solo habla cuando cambia</b> el estado, y cada 15 s manda un <em>latido</em> repitiéndolo.</li>
+        <li><b>El ESP32 recibe</b> <code>GET /ocupado</code> o <code>/libre</code>, anima la transición y dibuja con una fuente de 3×5 píxeles (cabe fija en 32×8).</li>
+        <li><b>Si el PC deja de dar señales</b> 45 s (WiFi cortado, portátil apagado), el cartel muestra <b class="ambar">?</b> en lugar de quedarse en rojo para siempre. Pruébalo con «Cortar el WiFi» y velocidad ×10.</li>
+      </ol>
+      <p class="nota">Esta simulación ejecuta la misma lógica que el firmware y el agente (traducida a JavaScript, y comprobada píxel a píxel contra el código C++ real). Lo único «de mentira» es la red y el micrófono.</p>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>MIT · <a href="https://github.com/granizocieza-cmyk/cartel-led-no-pasar-teletrabajo">granizocieza-cmyk/cartel-led-no-pasar-teletrabajo</a></p>
+  </footer>
+
+  <script src="js/nucleo.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

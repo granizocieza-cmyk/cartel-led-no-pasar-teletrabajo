@@ -121,12 +121,14 @@ bool autorizado() {
 
 void atenderOcupado() {
   if (!autorizado()) return;
+  Serial.println("[http] GET /ocupado");
   recibirOrden(OCUPADO);
   servidor.send(200, "text/plain", "ok ocupado");
 }
 
 void atenderLibre() {
   if (!autorizado()) return;
+  Serial.println("[http] GET /libre");
   recibirOrden(LIBRE);
   servidor.send(200, "text/plain", "ok libre");
 }
