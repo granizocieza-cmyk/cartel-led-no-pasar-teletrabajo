@@ -31,7 +31,20 @@ La señal de «está en llamada» es simplemente **que el micrófono esté en us
 
 ## Cómo funciona
 
-```mermaid<br/>flowchart LR<br/>    subgraph PC["💻 PC con Windows"]<br/>        A["cartel-agent.exe (C++)\nWASAPI: ¿alguna sesión de\nmicrófono en AudioSessionStateActive?"]<br/>        A --> B["Antirrebote + latido"]<br/>    end<br/>    B -- "HTTP GET /ocupado · /libre\n(WiFi, red local)" --> E<br/>    subgraph ESP["📟 ESP32 DevKit V1"]<br/>        E["Servidor HTTP + mDNS\ncartel.local"] --> L["Lógica de estado\nrojo · verde · neutro"]<br/>        L -- "IO16 + 330 Ω" --> M<br/>    end<br/>    PSU["🔌 Fuente 5 V 2–3 A\n+ 1000 µF"] --> M<br/>    M["Matriz WS2812B 8×32"]<br/>```
+```mermaid
+flowchart LR
+    subgraph PC["💻 PC con Windows"]
+        A["cartel-agent.exe (C++)<br/>WASAPI: ¿alguna sesión de<br/>micrófono en AudioSessionStateActive?"]
+        A --> B["Antirrebote + latido"]
+    end
+    B -- "HTTP GET /ocupado · /libre<br/>(WiFi, red local)" --> E
+    subgraph ESP["📟 ESP32 DevKit V1"]
+        E["Servidor HTTP + mDNS<br/>cartel.local"] --> L["Lógica de estado<br/>rojo · verde · neutro"]
+        L -- "IO16 + 330 Ω" --> M
+    end
+    PSU["🔌 Fuente 5 V 2–3 A<br/>+ 1000 µF"] --> M
+    M["Matriz WS2812B 8×32"]
+```
 
 1. **El agente** (en el PC) pregunta a Windows cada segundo qué sesiones de **todos** los micrófonos están activas. Micro activo → *ocupado*.
 2. **Antirrebote:** pasar a *ocupado* es inmediato; pasar a *libre* espera 5 s sin actividad (no parpadea si el micro se corta un instante).
