@@ -51,8 +51,8 @@ inline uint16_t indiceLed(int x, int y) {
 //   1) BRILLO_MAX: tope fijo de brillo (0-255), ni siquiera la web lo supera.
 //   2) LIMITE_MA : el firmware estima los mA de cada fotograma y, si se pasa
 //      del presupuesto, baja el brillo solo para ese fotograma.
-// Con BRILLO_MAX = 48, el peor caso (todo blanco) son ~2,9 A y el límite por
-// software lo recorta antes. El texto real (rojo, ~60 píxeles) gasta ~0,3 A.
+// Con BRILLO_MAX = 48, el peor caso (todo blanco) son ~3,1 A y el límite por
+// software lo recorta antes. El texto real (rojo, ~73 píxeles) gasta ~0,5 A en total.
 constexpr uint8_t  BRILLO_MAX      = 48;
 constexpr uint8_t  BRILLO_INICIAL  = 40;
 constexpr uint32_t LIMITE_MA       = 1800;  // presupuesto: deja margen en una fuente de 2 A
