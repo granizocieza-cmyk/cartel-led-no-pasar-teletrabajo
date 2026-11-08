@@ -1,0 +1,21 @@
+# --- Secretos y configuración local (NUNCA subir) ---
+firmware-esp32/cartel/secrets.h
+windows-service/config.ini
+
+# --- Compilación ---
+.pio/
+.vscode/
+build/
+out/
+*.o
+*.obj
+*.exe
+*.elf
+*.bin
+
+# --- Otros ---
+__pycache__/
+node_modules/
+*.log
+Thumbs.db
+.DS_Store
