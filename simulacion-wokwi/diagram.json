@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "author": "cartel-led-no-pasar-teletrabajo",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-resistor", "id": "r1", "top": 120, "left": 190, "rotate": 0, "attrs": { "value": "330" } },
+    {
+      "type": "wokwi-neopixel-canvas",
+      "id": "matriz",
+      "top": -150,
+      "left": 330,
+      "attrs": { "rows": "8", "cols": "32", "pixelate": "1", "matrixBrightness": "6" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn-ocupado",
+      "top": 230,
+      "left": 190,
+      "attrs": { "color": "red", "label": "NO PASAR" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn-libre",
+      "top": 290,
+      "left": 190,
+      "attrs": { "color": "green", "label": "PASAR" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:16", "r1:1", "green", [ "h0" ] ],
+    [ "r1:2", "matriz:DIN", "green", [ "h0" ] ],
+    [ "esp:5V", "matriz:VDD", "red", [ "h0" ] ],
+    [ "esp:GND.2", "matriz:VSS", "black", [ "h0" ] ],
+    [ "esp:25", "btn-ocupado:1.l", "red", [ "h0" ] ],
+    [ "btn-ocupado:2.l", "esp:GND.2", "black", [ "h0" ] ],
+    [ "esp:26", "btn-libre:1.l", "green", [ "h0" ] ],
+    [ "btn-libre:2.l", "esp:GND.2", "black", [ "h0" ] ]
+  ],
+  "dependencies": {}
+}

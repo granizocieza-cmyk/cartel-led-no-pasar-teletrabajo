@@ -23,8 +23,14 @@ constexpr uint16_t NUM_LEDS  = ANCHO * ALTO;   // 256
 //   0 = columnas en zigzag   (lo típico en paneles flexibles 8x32)
 //   1 = filas progresivas    (todas las filas de izquierda a derecha)
 //   2 = filas en zigzag
+// En simulación (Wokwi) la matriz virtual numera los píxeles por filas, así que
+// ahí uso el orden 1 automáticamente (también cuando no hay secrets.h).
 #ifndef MATRIZ_ORDEN
+#if defined(SIMULACION) || !__has_include("secrets.h")
+#define MATRIZ_ORDEN 1
+#else
 #define MATRIZ_ORDEN 0
+#endif
 #endif
 
 // Convierte coordenadas (x = 0..31, y = 0..7; (0,0) = esquina superior

@@ -1,0 +1,6 @@
+# Proyecto Wokwi para VS Code / wokwi-cli.
+# Antes de simular, compila:   cd ../firmware-esp32 && pio run -e wokwi
+[wokwi]
+version = 1
+firmware = '../firmware-esp32/.pio/build/wokwi/firmware.bin'
+elf = '../firmware-esp32/.pio/build/wokwi/firmware.elf'
