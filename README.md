@@ -4,18 +4,23 @@ Un cartel LED junto a la puerta que se pone en **rojo «NO PASAR»** cuando algu
 
 La señal de «está en llamada» es simplemente **que el micrófono esté en uso**, no «hay Teams abierto». Así funciona con cualquier aplicación, sin integraciones ni permisos de empresa.
 
+![Maqueta 3D: la llamada, el cartel en rojo, la gente que espera y la puerta que se abre](docs/img/escena3d.gif)
+
+<sub>Secuencia de la maqueta 3D (se genera con `pruebas/capturar_escena3d.py`). Debajo, el cartel LED en solitario:</sub>
+
 ![Demostración del cartel](docs/img/cartel.gif)
 
 | | |
 |---|---|
-| 🌐 **Simulación web interactiva** | <https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/> |
+| 🌐 **Maqueta 3D interactiva** | <https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/> |
+| 🪶 **Versión ligera 2D** | <https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/ligero.html> (se abre sola si el 3D no carga) |
 | 🔌 **Circuito en Wokwi** | [`simulacion-wokwi/`](simulacion-wokwi/README.md) (3 pasos para abrirlo en el navegador) |
 | 🧪 **Pruebas** | `node pruebas/prueba_ciclo.js` · `python pruebas/comparar_firmware_web.py` · agente: `windows-service/tests` |
 
 ---
 
 ## Índice
-1. [Cómo funciona](#cómo-funciona)
+1. [Cómo funciona](#cómo-funciona) · [Maqueta 3D](#maqueta-3d)
 2. [Lista de materiales](#lista-de-materiales)
 3. [Esquema de conexiones](#esquema-de-conexiones)
 4. [Montaje, compilación e instalación paso a paso](#montaje-compilación-e-instalación-paso-a-paso)
@@ -51,6 +56,26 @@ flowchart LR
 3. **Solo habla cuando cambia el estado**, más un **latido** cada 15 s repitiendo el estado.
 4. **El ESP32** recibe la petición, hace un barrido animado y dibuja el mensaje.
 5. **Si no hay latido durante 45 s** (WiFi caído, portátil apagado o dormido), el cartel muestra un **`?` ámbar** en lugar de quedarse en «NO PASAR» para siempre.
+
+---
+
+## Maqueta 3D
+
+La portada de GitHub Pages es una **maqueta arquitectónica en 3D** que cuenta el proyecto sin leer nada:
+
+1. **Dentro:** una persona (figura de maqueta con auriculares) teletrabaja. Le entra una llamada, se ve la interfaz genérica de videollamada en su portátil, la acepta y habla (micro activo, ondas de audio).
+2. **En la puerta, por fuera:** el cartel 8×32. Al activarse el micro, la petición HTTP viaja por WiFi (esfera sobre una curva) y el cartel pasa a **NO PASAR** con la misma transición, texto y animaciones que el firmware.
+3. **En el pasillo:** dos personas llegan, leen el cartel en rojo, reaccionan y esperan. Cuando el cartel cambia a **PASAR**, la puerta se abre y entran.
+4. **Panel de telemetría:** máquina de estados del agente (LIBRE → EN LLAMADA → ANTIRREBOTE), log de peticiones HTTP en tiempo real, y datos del hardware (ESP32, IO16, brillo, consumo estimado).
+
+Controles: *Llamada entrante*, *Colgar*, *Guion automático* (bucle), tres cámaras (General, Cartel, Escritorio) y cámara orbitable con límites, *Cortar WiFi* (para ver el estado `?` tras 45 s sin latido; usa «Tiempo ×5» para no esperar) y deslizador de brillo. En móvil el panel se pliega. Con `prefers-reduced-motion` el guion automático arranca desactivado.
+
+**Cómo está hecho:** three.js 0.160 desde CDN (sin build), toda la geometría es propia (cajas, cilindros y cápsulas), y el cartel no se reinventa: la escena usa `docs/js/nucleo.js`, la misma lógica del `Agente` y del `Cartel` que la versión 2D y que se compara píxel a píxel con el firmware C++. El cartel está a escala ampliada para que se lea. Si WebGL o el CDN fallan, redirige a la versión ligera 2D.
+
+**Créditos y licencias (no hay modelos ni texturas externas):**
+- [three.js](https://threejs.org) r160, licencia MIT, cargado desde jsDelivr.
+- Fuentes [Inter](https://rsms.me/inter/) y [JetBrains Mono](https://www.jetbrains.com/lp/mono/), licencia SIL OFL 1.1, cargadas desde Google Fonts.
+- La interfaz de videollamada es genérica: no usa logos ni marcas de ninguna aplicación.
 
 ---
 
@@ -249,7 +274,7 @@ Hay un circuito completo (ESP32, matriz 8×32 en IO16, resistencia de 330 Ω y d
 2. Copia `diagram.json` y `libraries.txt` de [`simulacion-wokwi/`](simulacion-wokwi/) y los archivos de [`firmware-esp32/cartel/`](firmware-esp32/cartel) (sin `secrets.h`).
 3. Pulsa ▶. Botón rojo = NO PASAR, verde = PASAR; 45 s sin pulsar = `?`.
 
-El plan gratuito de Wokwi **no admite conexiones entrantes**, así que ahí el firmware se compila en modo `SIMULACION` (botones en vez de WiFi). Para ver el flujo de red completo usa la [simulación web](https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/). Detalles y uso con VS Code en [`simulacion-wokwi/README.md`](simulacion-wokwi/README.md).
+El plan gratuito de Wokwi **no admite conexiones entrantes**, así que ahí el firmware se compila en modo `SIMULACION` (botones en vez de WiFi). Para ver el flujo de red completo usa la [maqueta 3D](https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/). Detalles y uso con VS Code en [`simulacion-wokwi/README.md`](simulacion-wokwi/README.md).
 
 ---
 
@@ -290,8 +315,8 @@ El plan gratuito de Wokwi **no admite conexiones entrantes**, así que ahí el f
 firmware-esp32/     Firmware (PlatformIO / Arduino IDE): cartel/ (código), pruebas/ (volcado de fotogramas)
 windows-service/    Agente de Windows en C++ (WASAPI + WinHTTP), CMake, scripts de compilación e instalación, tests
 simulacion-wokwi/   diagram.json, wokwi.toml y guía para Wokwi
-docs/               Simulación web (GitHub Pages): index.html, css/, js/, img/
-pruebas/            Comparación firmware ↔ web, prueba del ciclo completo, generador del GIF
+docs/               GitHub Pages: index.html (maqueta 3D), ligero.html (2D), css/, js/, img/
+pruebas/            Comparación firmware ↔ web, prueba del ciclo completo, generadores de GIF y capturas 3D
 ```
 
 ## Licencia
