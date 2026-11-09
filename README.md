@@ -12,8 +12,6 @@ La señal de «está en llamada» es simplemente **que el micrófono esté en us
 
 <p align="center"><b>▶ <a href="https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/">Ver la simulación 3D en vivo</a></b> · <a href="https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/ligero.html">versión 2D ligera</a></p>
 
-![Demostración del cartel](docs/img/cartel.gif)
-
 | | |
 |---|---|
 | 🌐 **Maqueta 3D interactiva** | <https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/> |
@@ -60,6 +58,10 @@ flowchart LR
 3. **Solo habla cuando cambia el estado**, más un **latido** cada 15 s repitiendo el estado.
 4. **El ESP32** recibe la petición, hace un barrido animado y dibuja el mensaje.
 5. **Si no hay latido durante 45 s** (WiFi caído, portátil apagado o dormido), el cartel muestra un **`?` ámbar** en lugar de quedarse en «NO PASAR» para siempre.
+
+Así se ve el cartel LED en solitario (secuencia: arranque → PASAR → NO PASAR → PASAR):
+
+![Demostración del cartel](docs/img/cartel.gif)
 
 ---
 
