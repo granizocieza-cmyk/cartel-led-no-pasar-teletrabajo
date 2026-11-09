@@ -96,7 +96,7 @@ h1 i { color: #3a4350; font-style: normal; font-weight: 300; }
 .barra { position: relative; height: 5px; border-radius: 9px; background: #1b222c; margin-top: 8px; }
 .barra i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, #4e8f6a, #b9a24e); transition: width 0.2s; }
 .barra u { position: absolute; left: 75%; top: -3px; bottom: -3px; width: 2px; background: var(--rojo); }
-.deslizador { display: grid; gap: 4px; margin-top: 10px; font: 11px var(--mono); color: var(--texto-2); }
+.deslizador { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin-top: 10px; font: 11px var(--mono); color: var(--texto-2); }
 .deslizador input { width: 100%; height: 32px; accent-color: #8aa0c6; }
 .nota-pequena { margin: 8px 0 0; font-size: 11px; color: var(--texto-2); }
 
