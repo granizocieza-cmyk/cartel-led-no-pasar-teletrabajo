@@ -4,9 +4,13 @@ Un cartel LED junto a la puerta que se pone en **rojo «NO PASAR»** cuando algu
 
 La señal de «está en llamada» es simplemente **que el micrófono esté en uso**, no «hay Teams abierto». Así funciona con cualquier aplicación, sin integraciones ni permisos de empresa.
 
-![Maqueta 3D: la llamada, el cartel en rojo, la gente que espera y la puerta que se abre](docs/img/escena3d.gif)
+<p align="center">
+  <a href="https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/"><img alt="Ver la simulación 3D en vivo" src="https://img.shields.io/badge/Simulaci%C3%B3n-%E2%96%B6%20Ver%203D%20en%20vivo-ff3b3b?style=for-the-badge"></a>
+  &nbsp;
+  <a href="https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/ligero.html"><img alt="Versión 2D ligera" src="https://img.shields.io/badge/Versi%C3%B3n-2D%20ligera-2fe370?style=for-the-badge"></a>
+</p>
 
-<sub>Secuencia de la maqueta 3D (se genera con `pruebas/capturar_escena3d.py`). Debajo, el cartel LED en solitario:</sub>
+<p align="center"><b>▶ <a href="https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/">Ver la simulación 3D en vivo</a></b> · <a href="https://granizocieza-cmyk.github.io/cartel-led-no-pasar-teletrabajo/ligero.html">versión 2D ligera</a></p>
 
 ![Demostración del cartel](docs/img/cartel.gif)
 
@@ -63,14 +67,14 @@ flowchart LR
 
 La portada de GitHub Pages es una **maqueta arquitectónica en 3D** que cuenta el proyecto sin leer nada:
 
-1. **Dentro:** una persona (figura de maqueta con auriculares) teletrabaja. Le entra una llamada, se ve la interfaz genérica de videollamada en su portátil, la acepta y habla (micro activo, ondas de audio).
+1. **Dentro:** una persona con auriculares teletrabaja (teclea, gesticula al hablar). Le entra una llamada, aparece un **bocadillo flotante** sobre ella («Llamada entrante» → «En llamada 00:12» con micrófono activo → «Llamada finalizada») sincronizado con la misma máquina de estados que el cartel, y en su portátil se ve una interfaz genérica de videollamada (ondas de audio).
 2. **En la puerta, por fuera:** el cartel 8×32. Al activarse el micro, la petición HTTP viaja por WiFi (esfera sobre una curva) y el cartel pasa a **NO PASAR** con la misma transición, texto y animaciones que el firmware.
-3. **En el pasillo:** dos personas llegan, leen el cartel en rojo, reaccionan y esperan. Cuando el cartel cambia a **PASAR**, la puerta se abre y entran.
+3. **En el pasillo:** dos personas (con pelo, ropa y calzado distintos) llegan, leen el cartel en rojo, reaccionan y esperan. Cuando el cartel cambia a **PASAR**, la puerta se abre y entran.
 4. **Panel de telemetría:** máquina de estados del agente (LIBRE → EN LLAMADA → ANTIRREBOTE), log de peticiones HTTP en tiempo real, y datos del hardware (ESP32, IO16, brillo, consumo estimado).
 
 Controles: *Llamada entrante*, *Colgar*, *Guion automático* (bucle), tres cámaras (General, Cartel, Escritorio) y cámara orbitable con límites, *Cortar WiFi* (para ver el estado `?` tras 45 s sin latido; usa «Tiempo ×5» para no esperar) y deslizador de brillo. En móvil el panel se pliega. Con `prefers-reduced-motion` el guion automático arranca desactivado.
 
-**Cómo está hecho:** three.js 0.160 desde CDN (sin build), toda la geometría es propia (cajas, cilindros y cápsulas), y el cartel no se reinventa: la escena usa `docs/js/nucleo.js`, la misma lógica del `Agente` y del `Cartel` que la versión 2D y que se compara píxel a píxel con el firmware C++. El cartel está a escala ampliada para que se lea. Si WebGL o el CDN fallan, redirige a la versión ligera 2D.
+**Cómo está hecho:** three.js 0.160 desde CDN (sin build), toda la geometría es propia (cajas y cilindros para la habitación; formas torneadas con esqueleto de articulaciones para las personas, sin modelos glTF externos: así el repo no depende de ningún archivo ni licencia ajena), y el cartel no se reinventa: la escena usa `docs/js/nucleo.js`, la misma lógica del `Agente` y del `Cartel` que la versión 2D y que se compara píxel a píxel con el firmware C++. El cartel está a escala ampliada para que se lea. Si WebGL o el CDN fallan, redirige a la versión ligera 2D.
 
 **Créditos y licencias (no hay modelos ni texturas externas):**
 - [three.js](https://threejs.org) r160, licencia MIT, cargado desde jsDelivr.
@@ -316,7 +320,7 @@ firmware-esp32/     Firmware (PlatformIO / Arduino IDE): cartel/ (código), prue
 windows-service/    Agente de Windows en C++ (WASAPI + WinHTTP), CMake, scripts de compilación e instalación, tests
 simulacion-wokwi/   diagram.json, wokwi.toml y guía para Wokwi
 docs/               GitHub Pages: index.html (maqueta 3D), ligero.html (2D), css/, js/, img/
-pruebas/            Comparación firmware ↔ web, prueba del ciclo completo, generadores de GIF y capturas 3D
+pruebas/            Comparación firmware ↔ web, prueba del ciclo completo, generador del GIF del cartel y capturas de revisión de la escena 3D
 ```
 
 ## Licencia
