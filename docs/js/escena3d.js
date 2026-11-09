@@ -15,7 +15,7 @@
  * ========================================================================== */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Maniqui } from './maniqui.js';
+import { Maniqui, ESTILOS } from './maniqui.js';
 import { crearHabitacion } from './habitacion.js';
 import { pintarLeds } from './leds.js';
 
@@ -67,12 +67,12 @@ function irACamara(nombre, instantaneo = false) {
 }
 
 // ---------------------------------------------------------------- Personajes
-const mama = new Maniqui({ color: 0xdccaa9, acento: 0xb9a07a, cascos: true });
+const mama = new Maniqui(ESTILOS.mama);
 mama.root.position.set(D.silla.x, 0, D.silla.z);
 mama.teletransportarYaw(Math.PI);
 mama.poner('sentado'); mama.cur = { ...mama.tgt }; mama.capasObjetivo.teclear = 1; mama.capas.teclear = 1;
-const v1 = new Maniqui({ color: 0xc9d0d8, acento: 0x9aa4b2 });
-const v2 = new Maniqui({ color: 0xd9c4b6, acento: 0xb59b8a });
+const v1 = new Maniqui(ESTILOS.visitante1);
+const v2 = new Maniqui(ESTILOS.visitante2);
 const visitantes = [v1, v2];
 for (const v of visitantes) { v.root.visible = false; }
 const personas = [mama, v1, v2];
@@ -314,10 +314,86 @@ function actualizarTelemetria(frame) {
   $('hw-wifi').className = sim.wifi ? '' : 'mal';
 }
 
+
+// ------------------------------------------------------- Bocadillo de llamada (capa HTML anclada al 3D)
+// Se sincroniza con la MISMA máquina de estados del guion (mamaEst.modo) y con sim.mic, no con
+// un temporizador propio: así cambia a la vez que el cartel y el panel de telemetría.
+const boc = $('bocadillo');
+const bocTitulo = boc.querySelector('.b-titulo'), bocSub = boc.querySelector('.b-sub');
+const bocTiempo = boc.querySelector('.b-tiempo'), bocMic = boc.querySelector('.b-mic');
+const anclaBocadillo = new THREE.Vector3(D.silla.x, 1.5, D.silla.z - 0.1);   // justo encima de la cabeza de quien teletrabaja
+const _p = new THREE.Vector3();
+let bocModo = '', bocTimeout = null, medidaLimites = { t: -1e9, arriba: 90, abajo: 600 };
+const mmss = (seg) => { const n = Math.floor(seg); return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0'); };
+
+function proyectar(v, w, h) {
+  _p.copy(v).project(camara);
+  return { x: (_p.x * 0.5 + 0.5) * w, y: (-_p.y * 0.5 + 0.5) * h, detras: _p.z > 1 };
+}
+
+function actualizarBocadillo() {
+  const modo = mamaEst.modo;
+  if (modo !== bocModo) {
+    bocModo = modo;
+    clearTimeout(bocTimeout);
+    if (modo === 'trabajo') boc.classList.remove('visible');                       // fundido de salida
+    else {
+      boc.dataset.estado = modo;
+      if (modo === 'suena') { bocTitulo.textContent = 'Llamada entrante'; bocSub.textContent = 'Cliente · Videollamada'; }
+      else if (modo === 'llamada') { bocTitulo.textContent = 'En llamada'; bocSub.textContent = 'Cliente · Micrófono activo'; }
+      else { bocTitulo.textContent = 'Llamada finalizada'; bocSub.textContent = 'Duración ' + mmss(mamaEst.dur); }
+      boc.classList.add('montado');
+      bocTimeout = setTimeout(() => boc.classList.add('visible'), 30);             // deja pintar el estado inicial y anima la entrada
+    }
+  }
+  if (bocModo === 'llamada') { bocTiempo.textContent = mmss(mamaEst.t); bocMic.classList.toggle('apagado', !sim.mic); }
+  if (!boc.classList.contains('montado')) return;
+
+  // Zona libre de la escena (debajo del título y encima de los mandos); se mide cada medio segundo
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (visual - medidaLimites.t > 500) {
+    const er = canvas.parentElement.getBoundingClientRect();
+    const tit = document.querySelector('.titulo').getBoundingClientRect(), man = document.querySelector('.mandos').getBoundingClientRect();
+    medidaLimites = { t: visual, arriba: Math.max(0, tit.bottom - er.top) + 4, abajo: Math.min(h, man.top - er.top) - 8 };
+  }
+  const bw = boc.offsetWidth, bh = boc.offsetHeight;
+  const xmin = bw / 2 + 8, xmax = w - bw / 2 - 8, ymin = medidaLimites.arriba + bh, ymax = medidaLimites.abajo;
+
+  const a = proyectar(anclaBocadillo, w, h);
+  let x = a.x, y = a.y - 26, fuera = a.detras;
+  if (a.detras) { x = xmin; y = ymin; }
+  x = Math.min(xmax, Math.max(xmin, x)); y = Math.min(ymax, Math.max(ymin, y));
+
+  // Nunca debe tapar el cartel de la puerta: si se solapa, se aparta hacia arriba, abajo o al lado
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, cartelDetras = false;
+  const q = new THREE.Vector3();
+  for (const dy of [-0.12, 0.12]) for (const dz of [-0.45, 0.45]) {
+    q.set(0.07, dy, dz); hab.cartel.grupo.localToWorld(q);
+    const r = proyectar(q, w, h); if (r.detras) cartelDetras = true; x0 = Math.min(x0, r.x); x1 = Math.max(x1, r.x); y0 = Math.min(y0, r.y); y1 = Math.max(y1, r.y);
+  }
+  x0 -= 12; x1 += 12; y0 -= 12; y1 += 12;
+  const solapa = (bx, by) => bx - bw / 2 < x1 && bx + bw / 2 > x0 && by - bh < y1 && by > y0;
+  if (!cartelDetras && solapa(x, y)) {
+    // 1º se aparta hacia un lado (el hilo sigue apuntando a la persona), 2º por encima, 3º por debajo
+    const izq = x0 - 6 - bw / 2, der = x1 + 6 + bw / 2;
+    if (izq >= xmin && !solapa(izq, y)) x = izq;
+    else if (der <= xmax && !solapa(der, y)) x = der;
+    else if (y0 - 4 >= ymin) y = y0 - 4;
+    else y = Math.min(ymax, y1 + 4 + bh);
+  }
+  // El hilo baja desde el bocadillo hasta el punto 3D de la persona (si queda razonable)
+  const largo = a.y - y, desvio = a.x - x;
+  fuera = fuera || a.detras || largo < 8 || largo > 110 || Math.abs(desvio) > bw / 2 + 130;
+  boc.classList.toggle('fuera', fuera);
+  boc.style.setProperty('--cx', Math.min(bw - 22, Math.max(22, bw / 2 + desvio)).toFixed(1) + 'px');
+  boc.style.setProperty('--ch', Math.max(8, largo).toFixed(1) + 'px');
+  boc.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`;
+}
+
 // ------------------------------------------------------------------- Bucle
 const reloj = new THREE.Clock();
 let primera = true;
-function actualizar(dt) {
+function actualizar(dt, dibujar = true) {
   visual += dt * 1000;
   logico += dt * 1000 * velocidad;
   while (proximoTick <= logico) { pasoAgente(proximoTick); proximoTick += 1000; }
@@ -360,6 +436,7 @@ function actualizar(dt) {
   hab.portatil.luz.intensity = sim.mic ? 0.9 : 0.25;
 
   if (visual - ultimaUI > 100) { ultimaUI = visual; actualizarTelemetria(frame); }
+  actualizarBocadillo();
   if (visual % 40 < 17 || primera) actualizarCurva();
 
   // Cámara: transición suave entre vistas predefinidas
@@ -375,7 +452,7 @@ function actualizar(dt) {
   controles.target.z = Math.max(-2.0, Math.min(2.2, controles.target.z));
   controles.update();
 
-  renderer.render(escena, camara);
+  if (dibujar) renderer.render(escena, camara);
   primera = false;
 }
 function bucle() {
@@ -383,7 +460,7 @@ function bucle() {
   requestAnimationFrame(bucle);
 }
 // Para pruebas: avanza la simulación `seg` segundos de golpe, sin depender de requestAnimationFrame.
-function avanzar(seg, paso = 1 / 30) { for (let t = 0; t < seg; t += paso) actualizar(paso); }
+function avanzar(seg, paso = 1 / 30) { for (let t = 0; t < seg; t += paso) actualizar(paso, t + paso >= seg); }
 
 // ---------------------------------------------------------------- Controles
 function ajustarTamano() {
@@ -439,7 +516,11 @@ const params = new URLSearchParams(location.search);
 window.__sim3d = { avanzar, cartel, agente, sim, mama, v1, v2, irACamara, camara, controles, renderer, escena, hab, mamaEst };
 if (params.has('captura')) {
   sim.auto = true;
-  if (params.get('cam')) irACamara(params.get('cam'), true);
+  const cam = params.get('cam') || '';
+  if (cam.includes(',')) {           // cámara libre para inspeccionar detalles: cam=x,y,z,tx,ty,tz
+    const n = cam.split(',').map(Number);
+    camara.position.set(n[0], n[1], n[2]); controles.target.set(n[3], n[4], n[5]); controles.update();
+  } else if (cam) irACamara(cam, true);
   avanzar(parseFloat(params.get('captura')) || 0, 1 / 15);
   const repintar = () => { renderer.render(escena, camara); requestAnimationFrame(repintar); };
   repintar();
